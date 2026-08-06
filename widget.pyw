@@ -82,9 +82,10 @@ class NewsWidget:
                                     highlightthickness=2)
         self.theme_btn.pack(side="right", padx=(6, 0))
 
-        self.refresh_btn = tk.Button(self.header, text="⟳", command=self.refresh,
+        self.refresh_btn = tk.Button(self.header, text="↻", command=self.refresh,
                                       relief="flat", font=("Segoe UI", 12, "bold"),
-                                      width=2, height=1, cursor="hand2", bd=0)
+                                      width=2, height=1, cursor="hand2", bd=0,
+                                      highlightthickness=0)
         self.refresh_btn.pack(side="right") 
 
         self.status = tk.Label(root, font=("Segoe UI", 8))
@@ -138,8 +139,10 @@ class NewsWidget:
         self.theme_btn.configure(bg=c["CARD_BG"], fg=c["TEXT_MAIN"],
                                   activebackground=c["BORDER"], activeforeground=c["TEXT_MAIN"],
                                   highlightbackground=glow_color, highlightcolor=glow_color)
-        self.refresh_btn.configure(bg=c["ACCENT"], fg="#101114" if self.theme_name == "dark" else "#ffffff",
-                                    activebackground=c["ACCENT"], activeforeground="#ffffff")
+        self.refresh_btn.configure(bg=c["CARD_BG"], fg=c["TEXT_MAIN"],
+                            activebackground=c["BORDER"], activeforeground=c["TEXT_MAIN"],
+                            highlightthickness=2,
+                            highlightbackground=c["BG"], highlightcolor=c["BG"])                  
 
     def refresh(self):
         c = THEMES[self.theme_name]
