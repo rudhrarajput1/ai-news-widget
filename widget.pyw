@@ -36,9 +36,9 @@ MAX_ITEMS_PER_FEED = 4
 THEMES = {
     "dark": {
         "BG": "#1e1f26",
-        "CARD_BG": "#2a2b35",
+        "CARD_BG": "#1d1e28",
         "ACCENT": "#5aa9ff",
-        "TEXT_MAIN": "#f0f0f2",
+        "TEXT_MAIN": "#f1f1fa",
         "TEXT_SUB": "#9a9ba5",
         "BORDER": "#383946",
     },
@@ -52,7 +52,7 @@ THEMES = {
     },
 }
 
-
+ 
 class NewsWidget:
     def __init__(self, root):
         self.root = root
@@ -76,15 +76,16 @@ class NewsWidget:
         self.title_label = tk.Label(self.header, text="AI / ML News", font=("Segoe UI", 15, "bold"))
         self.title_label.pack(side="left")
 
-        self.theme_btn = tk.Button(self.header, text="Theme", command=self.toggle_theme,
-                                    relief="flat", font=("Segoe UI", 9, "bold"),
-                                    padx=10, pady=4, cursor="hand2", bd=0)
+        self.theme_btn = tk.Button(self.header, text="🌓", command=self.toggle_theme,
+                                    relief="flat", font=("Segoe UI", 12),
+                                    width=2, height=1, cursor="hand2", bd=0,
+                                    highlightthickness=2)
         self.theme_btn.pack(side="right", padx=(6, 0))
 
-        self.refresh_btn = tk.Button(self.header, text="Refresh", command=self.refresh,
-                                      relief="flat", font=("Segoe UI", 9, "bold"),
-                                      padx=12, pady=4, cursor="hand2", bd=0)
-        self.refresh_btn.pack(side="right")
+        self.refresh_btn = tk.Button(self.header, text="⟳", command=self.refresh,
+                                      relief="flat", font=("Segoe UI", 12, "bold"),
+                                      width=2, height=1, cursor="hand2", bd=0)
+        self.refresh_btn.pack(side="right") 
 
         self.status = tk.Label(root, font=("Segoe UI", 8))
         self.status.pack(fill="x", padx=16)
@@ -104,8 +105,16 @@ class NewsWidget:
         self.scrollbar.pack(side="right", fill="y")
 
         def _on_mousewheel(event):
-            self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-        self.canvas.bind_all("<MouseWheel>", _on_mousewheel)
+         self.canvas.yview_scroll(int(-3 * (event.delta / 120)), "units")
+
+        def _bind_scroll(event):
+         self.canvas.bind_all("<MouseWheel>", _on_mousewheel)
+
+        def _unbind_scroll(event):
+         self.canvas.unbind_all("<MouseWheel>")
+
+        self.canvas.bind("<Enter>", _bind_scroll)
+        self.canvas.bind("<Leave>", _unbind_scroll)
 
         self.apply_theme()
         self.refresh()
@@ -125,8 +134,10 @@ class NewsWidget:
         self.canvas.configure(bg=c["BG"])
         self.list_frame.configure(bg=c["BG"])
 
+        glow_color = "#5aa9ff" if self.theme_name == "dark" else "#e8a33d"
         self.theme_btn.configure(bg=c["CARD_BG"], fg=c["TEXT_MAIN"],
-                                  activebackground=c["BORDER"], activeforeground=c["TEXT_MAIN"])
+                                  activebackground=c["BORDER"], activeforeground=c["TEXT_MAIN"],
+                                  highlightbackground=glow_color, highlightcolor=glow_color)
         self.refresh_btn.configure(bg=c["ACCENT"], fg="#101114" if self.theme_name == "dark" else "#ffffff",
                                     activebackground=c["ACCENT"], activeforeground="#ffffff")
 
