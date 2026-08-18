@@ -16,6 +16,7 @@ import webbrowser
 import threading
 import feedparser
 import os
+import json
 import ctypes
 
 try:
@@ -41,6 +42,25 @@ CATEGORY_ORDER = list(FEEDS.keys())  # ["AI", "ML", "Tech"] - controls slide ord
 MAX_ITEMS_PER_FEED = 6
 WIN_WIDTH = 400
 
+BOOKMARK_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bookmarks.json")
+
+def load_bookmarks():
+    if not os.path.exists(BOOKMARK_FILE):
+        return []
+    try:
+        with open(BOOKMARK_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return []
+    
+def save_bookmarks(bookmarks):
+    try:
+        with open(BOOKMARK_FILE, "w" , encoding= "utf-8") as f:
+            json.dump(bookmarks, f , indent=2)
+    except Exception:
+        pass
+    
+    
 THEMES = {
     "dark": {
         "BG": "#1e1f26",
@@ -49,6 +69,7 @@ THEMES = {
         "TEXT_MAIN": "#f0f0f2",
         "TEXT_SUB": "#9a9ba5",
         "BORDER": "#383946",
+        "STAR": "#e8c14d",
     },
     "light": {
         "BG": "#f4f3ee",
@@ -57,6 +78,7 @@ THEMES = {
         "TEXT_MAIN": "#2c2c2a",
         "TEXT_SUB": "#6b6a63",
         "BORDER": "#e4e2d9",
+        "STAR": "#c9931f",
     },
 }
 
@@ -68,7 +90,8 @@ class NewsWidget:
         self.results_cache = {}
         self.active_index = 0                 # which column (0=AI, 1=ML, 2=Tech) is currently in view
         self.dots = []                          # small position-indicator dots at the bottom
-        self.drag_start_x = None                # tracks mouse position during a click-drag swipe
+        self.drag_start_x = None  
+        self.bookmarks = load_bookmarks()        # tracks mouse position during a click-drag swipe
 
         root.title("AI / ML News")
         root.geometry(f"{WIN_WIDTH}x560+80+80")
@@ -105,7 +128,7 @@ class NewsWidget:
         self.slider_canvas.pack(fill="both", expand=True, padx=10, pady=(6, 4))
 
         self.column_frames = {}
-        for i, category in enumerate(CATEGORY_ORDER):
+        for i, category in enumerate(CATEGORY_ORDER):       
             col = tk.Frame(self.slider_canvas, width=WIN_WIDTH - 20)
             col.pack_propagate(False)
 
@@ -119,26 +142,20 @@ class NewsWidget:
 
             scroll_canvas.pack(side="left", fill="both", expand=True)
             scrollbar.pack(side="right", fill="y")
-
-            def make_scroll_handlers(cv):
-                def _on_mousewheel(event):
-                    cv.yview_scroll(int(-1 * (event.delta / 120)), "units")
-                def _bind_scroll(event):
-                    cv.bind_all("<MouseWheel>", _on_mousewheel)
-                def _unbind_scroll(event):
-                    cv.unbind_all("<MouseWheel>")
-                return _bind_scroll, _unbind_scroll
-
-            bind_fn, unbind_fn = make_scroll_handlers(scroll_canvas)
-            scroll_canvas.bind("<Enter>", bind_fn)
-            scroll_canvas.bind("<Leave>", unbind_fn)
-
+               
+           
+           
             self.slider_canvas.create_window(i * WIN_WIDTH, 0, window=col, anchor="nw",
                                               width=WIN_WIDTH - 20, height=440)
 
             self.column_frames[category] = {"list_frame": list_frame, "col": col, "scroll_canvas": scroll_canvas}
 
         self.slider_canvas.configure(scrollregion=(0, 0, WIN_WIDTH * len(CATEGORY_ORDER), 440))
+
+        def _on_mousewheel(event):
+            active_canvas = self.column_frames[CATEGORY_ORDER[self.active_index]]["scroll_canvas"]
+            active_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        root.bind_all("<MouseWheel>", _on_mousewheel)
 
         # --- Dot indicators (bottom) ---
         self.dots_bar = tk.Frame(root)
@@ -242,6 +259,19 @@ class NewsWidget:
         self.results_cache = results
         self.root.after(0, lambda: self._render(results))
 
+
+    def is_bookmarked(self, link):
+        return any (b["link"] == link for b in self.bookmarks)
+    
+    def toggle_bookmark(self, source, title, link):
+        if self.is_bookmarked(link):
+            self.bookmarks = [b for b in self.bookmarks if b["link"] != link]
+        else:
+            self.bookmarks.append({"source": source, "title": title, "link": link})
+            save_bookmarks(self.bookmarks)
+            self._render(self.results_cache)
+
+
     def _render(self, results):
         c = THEMES[self.theme_name]
 
@@ -250,7 +280,11 @@ class NewsWidget:
             for widget in list_frame.winfo_children():
                 widget.destroy()
 
-            items = results.get(category, [])
+
+            if category == "Saved":
+                items = [(b["source"], b["title"], b["link"]) for b in self.bookmarks]
+            else:
+                items = results.get(category, [])
             if not items:
                 tk.Label(list_frame, text="No items right now.", font=("Segoe UI", 9),
                          bg=c["BG"], fg=c["TEXT_SUB"], anchor="w").pack(fill="x", pady=(10, 0))
@@ -260,9 +294,20 @@ class NewsWidget:
                 card = tk.Frame(list_frame, bg=c["BG"])
                 card.pack(fill="x", pady=(0, 10))
 
-                tk.Label(card, text=source, font=("Segoe UI", 8, "bold"), bg=c["BG"],
-                         fg=c["TEXT_SUB"], anchor="w").pack(fill="x", pady=(0, 2))
+                top_row= tk.Frame(card, bg=c["BG"])
+                top_row.pack(fill="x")
 
+                tk.Label(top_row, text=source, font=("Segoe UI", 8, "bold"), bg=c["BG"],
+                         fg=c["TEXT_SUB"], anchor="w").pack(side="left", pady=(0, 2))
+
+                star_text = "★" if self.is_bookmarked(link) else "☆"
+                star_btn = tk.Label(top_row, text=star_text, font=("Segoe UI", 11), bg=c["BG"],
+                                     fg=c["STAR"] if self.is_bookmarked(link) else c["TEXT_SUB"],
+                                     cursor="hand2")
+                star_btn.pack(side="right")
+                star_btn.bind("<Button-1>", lambda e, s=source, t=title, l=link: self.toggle_bookmark(s, t, l))
+               
+               
                 link_label = tk.Label(card, text=title, font=("Segoe UI", 10), bg=c["BG"],
                                        fg=c["TEXT_MAIN"], anchor="w", justify="left",
                                        wraplength=310, cursor="hand2")
@@ -289,3 +334,4 @@ if __name__ == "__main__":
         import traceback
         traceback.print_exc()
         input("Press Enter to close...")
+        
