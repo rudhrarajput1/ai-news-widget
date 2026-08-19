@@ -1,9 +1,11 @@
 # AI / ML News Widget
 
-A small Windows desktop app that shows the latest AI and ML headlines in a clean, always-on-top window — pulled directly from real news sites' public RSS feeds.
+A small Windows desktop app that shows the latest AI, ML, and Tech headlines in a clean, always-on-top window — pulled directly from real news sites' public RSS feeds.
 
 ## Features
-- Live headlines from TechCrunch AI, VentureBeat AI, and MIT Technology Review
+- Live headlines from TechCrunch AI, VentureBeat AI, MIT Technology Review, TechCrunch, and The Verge
+- Three news categories (AI / ML / Tech) plus a Saved tab — swipe or use arrow keys to switch between them
+- Bookmark any headline with a star, saved locally so it persists between sessions
 - One-click Refresh to pull the latest news anytime
 - Dark / Light theme toggle
 - Click any headline to open the full article in your browser
