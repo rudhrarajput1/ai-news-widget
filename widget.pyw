@@ -82,6 +82,20 @@ THEMES = {
     },
 }
 
+CATEGORY_COLORS = {
+    "dark": {
+        "AI": "#2a3b3a",
+        "ML": "#302b40",
+        "Tech": "#3a3220",
+        "Saved": "#332e2a",
+    },
+    "light": {
+        "AI": "#e3efec",
+        "ML": "#e9e6f4",
+        "Tech": "#f3ecd8",
+        "Saved": "#efe9e2",
+    },
+}
 
 class NewsWidget:
     def __init__(self, root):
@@ -268,9 +282,8 @@ class NewsWidget:
             self.bookmarks = [b for b in self.bookmarks if b["link"] != link]
         else:
             self.bookmarks.append({"source": source, "title": title, "link": link})
-            save_bookmarks(self.bookmarks)
-            self._render(self.results_cache)
-
+        save_bookmarks(self.bookmarks)
+        self._render(self.results_cache)
 
     def _render(self, results):
         c = THEMES[self.theme_name]
@@ -291,30 +304,29 @@ class NewsWidget:
                 continue
 
             for source, title, link in items:
-                card = tk.Frame(list_frame, bg=c["BG"])
-                card.pack(fill="x", pady=(0, 10))
+                card_bg = CATEGORY_COLORS[self.theme_name].get(category, c["BG"])
+                card  = tk.Frame(list_frame, bg=card_bg, padx=10, pady=10)
+                card.pack(fill="x", pady=(0, 8))
 
-                top_row= tk.Frame(card, bg=c["BG"])
+                top_row= tk.Frame(card, bg=card_bg)
                 top_row.pack(fill="x")
 
-                tk.Label(top_row, text=source, font=("Segoe UI", 8, "bold"), bg=c["BG"],
+                tk.Label(top_row, text=source, font=("Segoe UI", 8, "bold"), bg=card_bg,
                          fg=c["TEXT_SUB"], anchor="w").pack(side="left", pady=(0, 2))
 
                 star_text = "★" if self.is_bookmarked(link) else "☆"
-                star_btn = tk.Label(top_row, text=star_text, font=("Segoe UI", 11), bg=c["BG"],
+                star_btn = tk.Label(top_row, text=star_text, font=("Segoe UI", 11), bg=card_bg,
                                      fg=c["STAR"] if self.is_bookmarked(link) else c["TEXT_SUB"],
                                      cursor="hand2")
                 star_btn.pack(side="right")
                 star_btn.bind("<Button-1>", lambda e, s=source, t=title, l=link: self.toggle_bookmark(s, t, l))
                
                
-                link_label = tk.Label(card, text=title, font=("Segoe UI", 10), bg=c["BG"],
+                link_label = tk.Label(card, text=title, font=("Segoe UI", 10), bg=card_bg,
                                        fg=c["TEXT_MAIN"], anchor="w", justify="left",
                                        wraplength=310, cursor="hand2")
                 link_label.pack(fill="x", pady=(0, 8))
 
-                divider = tk.Frame(card, height=1, bg=c["BORDER"])
-                divider.pack(fill="x")
                 
                 if link:
                     link_label.bind("<Button-1>", lambda e, u=link: webbrowser.open(u))
