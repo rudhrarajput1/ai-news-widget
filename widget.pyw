@@ -1,5 +1,5 @@
 """
-AI/ML/Tech News Desktop Widget (Windows) - v7, 3-dot menu + Saved view
+AI/ML/Tech News Desktop Widget (Windows) - v7, 3-dot menu + Saved view + search
 --------------------------------------------------------------------
 Make sure "app_icon.ico" is saved in this same folder before running.
 
@@ -121,7 +121,7 @@ class NewsWidget:
             except Exception:
                 pass
 
-        # ---------------- Header ----------------
+        # Header
         self.header = tk.Frame(root)
         self.header.pack(fill="x", padx=16, pady=(16, 4))
 
@@ -187,7 +187,7 @@ class NewsWidget:
 
         self.saved_header = tk.Frame(self.saved_view)
         self.saved_header.pack(fill="x", padx=16, pady=(4, 4))
-        
+
         self.saved_back_btn = tk.Button(self.saved_header, text="\u2190 Back", command=self.show_main,
                                          relief="flat", font=("Segoe UI", 9, "bold"),
                                          cursor="hand2", bd=0, highlightthickness=0)
@@ -195,11 +195,24 @@ class NewsWidget:
         self.saved_title = tk.Label(self.saved_header, text="Saved News", font=("Segoe UI", 11, "bold"))
         self.saved_title.pack(side="left", padx=(10, 0))
 
+        # --- Search box (must be built before apply_theme() is called below) ---
+        self.search_row = tk.Frame(self.saved_view)
+        self.search_row.pack(fill="x", padx=16, pady=(0, 8))
+
+        self.saved_search_var = tk.StringVar()
+        self.saved_search_entry = tk.Entry(self.search_row, textvariable=self.saved_search_var,
+                                    font=("Segoe UI", 9), relief="flat", bd=6,
+                                    highlightthickness=1)
+        self.saved_search_entry.pack(fill="x")
+        self.saved_search_var.trace_add("write", lambda *args: self._render_saved())
+
         saved_col, self.saved_list_frame, self.saved_scroll_canvas = self._build_scrollable_list(self.saved_view)
         saved_col.pack(fill="both", expand=True, padx=10, pady=(0, 10))
 
+        # ---------------- Everything is built now: set initial title, theme, and fetch ----------------
+        self.title_label.config(text=f"{CATEGORY_ORDER[self.active_index]} News")
         self.apply_theme()
-        self.refresh()
+        self.root.after(100, self.refresh)
 
     # ---------------- Layout helper ----------------
     def _build_scrollable_list(self, parent):
@@ -315,6 +328,12 @@ class NewsWidget:
         self.saved_list_frame.master.configure(bg=c["BG"])  # scroll_canvas
         self.saved_list_frame.configure(bg=c["BG"])
 
+        self.search_row.configure(bg=c["BG"])
+        self.saved_search_entry.configure(bg=c["CARD_BG"], fg=c["TEXT_MAIN"],
+                                   insertbackground=c["TEXT_MAIN"],
+                                   highlightbackground=c["BORDER"],
+                                   highlightcolor=c["ACCENT"])
+
         self.update_dots()
 
     # ---------------- Fetching ----------------
@@ -413,8 +432,21 @@ class NewsWidget:
                      anchor="w", wraplength=310, justify="left").pack(fill="x", pady=(10, 0))
             return
 
+        query = self.saved_search_var.get().strip().lower()
+        if query:
+            items = [b for b in self.bookmarks
+                     if query in b["title"].lower() or query in b["source"].lower()]
+        else:
+            items = self.bookmarks
+
+        if not items:
+            tk.Label(self.saved_list_frame, text="No matches found.",
+                     font=("Segoe UI", 9), bg=c["BG"], fg=c["TEXT_SUB"],
+                     anchor="w").pack(fill="x", pady=(10, 0))
+            return
+
         card_bg = CATEGORY_COLORS[self.theme_name].get("Saved", c["BG"])
-        for b in self.bookmarks:
+        for b in items:
             self._build_card(self.saved_list_frame, b["source"], b["title"], b["link"], card_bg)
 
 
