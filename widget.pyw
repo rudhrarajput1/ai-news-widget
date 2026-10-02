@@ -29,13 +29,16 @@ FEEDS = {
     "AI": [
         ("TechCrunch AI", "https://techcrunch.com/category/artificial-intelligence/feed/"),
         ("VentureBeat AI", "https://venturebeat.com/category/ai/feed/"),
+        ("Hugging Face Blog", "https://huggingface.co/blog/feed.xml"),
     ],
     "ML": [
         ("MIT Tech Review", "https://www.technologyreview.com/feed/"),
+        ("openai blog", "https://openai.com/news/rss.xml")
     ],
     "Tech": [
         ("TechCrunch", "https://techcrunch.com/feed/"),
         ("The Verge", "https://www.theverge.com/rss/index.xml"),
+        
     ],
 }
 
